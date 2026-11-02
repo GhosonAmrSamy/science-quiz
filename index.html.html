@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grade 4 Science Vocab Master</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Tajawal', sans-serif; background-color: #f0fdf4; }
+    .flashcard { perspective: 1000px; }
+    .flashcard-inner { transition: transform 0.6s; transform-style: preserve-3d; }
+    .flashcard.flipped .flashcard-inner { transform: rotateY(180deg); }
+    .flashcard-front, .flashcard-back { backface-visibility: hidden; }
+    .flashcard-back { transform: rotateY(180deg); }
+  </style>
+</head>
+<body class="min-h-screen text-slate-800 flex flex-col justify-between">
+
+  <!-- Header -->
+  <header class="bg-emerald-600 text-white p-4 shadow-lg sticky top-0 z-50">
+    <div class="max-w-md mx-auto flex justify-between items-center">
+      <h1 class="text-xl font-bold flex items-center gap-2">
+        🧪 <span>تسميع العلوم - Grade 4</span>
+      </h1>
+      <button onclick="openSettings()" class="bg-emerald-700 hover:bg-emerald-800 text-sm px-3 py-1.5 rounded-lg border border-emerald-500 transition">
+        ⚙️ الإعدادات
+      </button>
+    </div>
+  </header>
+
+  <main class="max-w-md mx-auto w-full p-4 flex-grow">
+
+    <!-- Screen 1: Welcome & Setup -->
+    <div id="screen-setup" class="bg-white rounded-2xl p-6 shadow-xl border border-emerald-100 text-center">
+      <div class="text-5xl mb-3">🌱</div>
+      <h2 class="text-2xl font-bold text-emerald-800 mb-2">مرحباً بك يا بطل العلوم!</h2>
+      <p class="text-gray-600 text-sm mb-6">جاهز لزيادة حصيلتك من كلمات الساينس وتجاوز الاختبارات بنجاح؟</p>
+
+      <div class="space-y-4 text-right">
+        <div>
+          <label class="block text-sm font-bold text-gray-700 mb-1">اسم الطالب / الطالبة:</label>
+          <input type="text" id="student-name" placeholder="اكتب اسمك الثلاثي هنا..." class="w-full p-3 border border-emerald-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none text-center font-bold">
+        </div>
+
+        <div>
+          <label class="block text-sm font-bold text-gray-700 mb-1">اختر الفصل / الدرس:</label>
+          <select id="lesson-select" class="w-full p-3 border border-emerald-300 rounded-xl bg-white font-bold focus:ring-2 focus:ring-emerald-500">
+            <optgroup label="Chapter 1: Nature in Our Surroundings">
+              <option value="ch1-all" selected>Chapter 1: All Lessons (كامل)</option>
+              <option value="ch1-l1">Lesson 1: Let's Find Living Organisms</option>
+              <option value="ch1-l2">Lesson 2: How to Observe</option>
+              <option value="ch1-l3">Lesson 3: Colors & Shapes of Living Organisms</option>
+              <option value="ch1-l4">Lesson 4: Different Places, Different Organisms</option>
+              <option value="ch1-l5">Lesson 5: Desert Living Organisms</option>
+            </optgroup>
+            <optgroup label="Chapter 2: How Insects Grow">
+              <option value="ch2-all">Chapter 2: All Lessons (كامل)</option>
+              <option value="ch2-l1">Lesson 1 & 2: Eggs, Larvae, Pupae & Adults</option>
+              <option value="ch2-l3">Lesson 3: Body Structure of Adults</option>
+            </optgroup>
+            <optgroup label="Chapter 3: How Plants Grow">
+              <option value="ch3-all">Chapter 3: All Lessons (كامل)</option>
+              <option value="ch3-l1">Lesson 1: Sowing Seeds</option>
+              <option value="ch3-l2">Lesson 2: After Sprouting</option>
+              <option value="ch3-l3">Lesson 3: Flowers and Fruits</option>
+              <option value="ch3-l4">Lesson 4: The Plant Body</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-bold text-gray-700 mb-1">اختر طريقة التدريب:</label>
+          <div class="grid grid-cols-3 gap-2">
+            <button onclick="setMode('write')" id="btn-mode-write" class="mode-btn p-3 rounded-xl border-2 border-emerald-500 bg-emerald-50 text-emerald-800 font-bold text-sm">✍️ كتابة</button>
+            <button onclick="setMode('mcq')" id="btn-mode-mcq" class="mode-btn p-3 rounded-xl border-2 border-gray-200 bg-white text-gray-600 font-bold text-sm">🔘 اختيارات</button>
+            <button onclick="setMode('cards')" id="btn-mode-cards" class="mode-btn p-3 rounded-xl border-2 border-gray-200 bg-white text-gray-600 font-bold text-sm">🃏 كروت</button>
+          </div>
+        </div>
+      </div>
+
+      <button onclick="startQuiz()" class="w-full mt-6 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg transform active:scale-95 transition text-lg">
+        ابدأ التحدي الآن 🚀
+      </button>
+    </div>
+
+    <!-- Screen 2: Active Quiz / Practice -->
+    <div id="screen-quiz" class="hidden space-y-4">
+      <!-- Progress & Score -->
+      <div class="bg-white rounded-xl p-3 shadow-md flex justify-between items-center text-sm font-bold">
+        <span id="quiz-progress-text" class="text-emerald-700">السؤال 1 من 10</span>
+        <div class="flex items-center gap-2">
+          <span class="text-amber-500">🔥 <span id="quiz-streak">0</span></span>
+          <span class="text-emerald-600">⭐ <span id="quiz-score">0</span></span>
+        </div>
+      </div>
+
+      <div class="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
+        <div id="quiz-progress-bar" class="bg-emerald-500 h-2.5 transition-all duration-300" style="width: 0%"></div>
+      </div>
+
+      <!-- Question Box -->
+      <div class="bg-white rounded-2xl p-6 shadow-xl border border-emerald-100 text-center relative">
+        <button onclick="speakCurrentWord()" class="absolute top-4 left-4 text-emerald-600 bg-emerald-50 p-2 rounded-full hover:bg-emerald-100" title="استمع للنطق الإنجليزي">
+          🔊
+        </button>
+
+        <span class="text-xs font-bold bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full uppercase tracking-wider" id="question-category">Science Vocab</span>
+        <h2 id="arabic-word" class="text-3xl font-extrabold text-gray-800 my-4">الكلمة بالعربي</h2>
+
+        <!-- Mode A: Write -->
+        <div id="container-write" class="space-y-3">
+          <input type="text" id="english-input" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" placeholder="Write English Word Here..." class="w-full p-4 border-2 border-emerald-300 rounded-xl text-center text-xl font-bold text-emerald-900 focus:outline-none focus:border-emerald-600">
+          
+          <div class="flex gap-2">
+            <button onclick="checkTypedAnswer()" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-xl shadow transition">تأكيد الإجابة ✔️</button>
+            <button onclick="showHint()" class="bg-amber-100 hover:bg-amber-200 text-amber-800 font-bold px-4 py-3 rounded-xl border border-amber-300">💡 تلميح</button>
+          </div>
+        </div>
+
+        <!-- Mode B: MCQ -->
+        <div id="container-mcq" class="grid grid-cols-1 gap-2.5 hidden">
+          <!-- Options injected via JS -->
+        </div>
+
+        <!-- Mode C: Flashcards -->
+        <div id="container-cards" class="hidden">
+          <div id="flashcard" class="flashcard w-full h-44 cursor-pointer" onclick="flipCard()">
+            <div class="flashcard-inner w-full h-full relative rounded-xl border-2 border-emerald-300 shadow-inner bg-emerald-50 flex items-center justify-center p-4">
+              <div class="flashcard-front absolute text-2xl font-bold text-emerald-900">اضغط لكشف الكلمة بالأنجليزي 🔍</div>
+              <div class="flashcard-back absolute text-3xl font-extrabold text-emerald-700 dir-ltr" id="card-english-text">Word</div>
+            </div>
+          </div>
+          <div class="flex gap-2 mt-4">
+            <button onclick="nextCard(false)" class="flex-1 bg-red-100 text-red-700 font-bold py-3 rounded-xl border border-red-200">❌ أحتاج مراجعتها</button>
+            <button onclick="nextCard(true)" class="flex-1 bg-emerald-500 text-white font-bold py-3 rounded-xl shadow">✅ عرفتها ممتاز</button>
+          </div>
+        </div>
+
+        <!-- Feedback Toast -->
+        <div id="feedback-message" class="hidden mt-4 p-3 rounded-xl font-bold text-sm"></div>
+
+        <!-- Secondary action buttons for Retry / Skip -->
+        <div id="action-buttons" class="hidden flex gap-2 mt-4">
+          <button id="btn-retry" onclick="retryQuestion()" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-bold py-2.5 rounded-xl">🔄 حاول مرة أخرى</button>
+          <button id="btn-next" onclick="forceNextQuestion()" class="flex-1 bg-slate-600 hover:bg-slate-700 text-white font-bold py-2.5 rounded-xl">التالي ➔</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 3: Results -->
+    <div id="screen-results" class="hidden bg-white rounded-2xl p-6 shadow-xl border border-emerald-100 text-center space-y-5">
+      <div class="text-6xl" id="results-emoji">🏆</div>
+      <h2 class="text-2xl font-bold text-gray-800">أحسنت يا بطل! أكملت الاختبار</h2>
+      
+      <div class="bg-emerald-50 rounded-xl p-4 border border-emerald-200 flex justify-around items-center">
+        <div>
+          <div class="text-xs text-gray-500 font-bold">النتيجة النهائية</div>
+          <div class="text-2xl font-black text-emerald-600" id="final-score">0 / 0</div>
+        </div>
+        <div class="h-8 w-px bg-emerald-200"></div>
+        <div>
+          <div class="text-xs text-gray-500 font-bold">النسبة المئوية</div>
+          <div class="text-2xl font-black text-emerald-600" id="final-percentage">0%</div>
+        </div>
+      </div>
+
+      <!-- Missed words review box -->
+      <div id="missed-words-box" class="text-right border-t pt-4">
+        <h3 class="font-bold text-red-600 mb-2 flex items-center gap-1">📌 كلمات تحتاج لإعادة مراجعتها:</h3>
+        <ul id="missed-words-list" class="space-y-1 text-sm bg-red-50 p-3 rounded-xl border border-red-100 max-h-40 overflow-y-auto">
+          <!-- Injected via JS -->
+        </ul>
+        <button onclick="practiceMissedWordsOnly()" id="btn-practice-missed" class="w-full mt-3 bg-red-500 hover:bg-red-600 text-white font-bold py-2 rounded-xl text-sm transition">
+          🔄 إعادة تسميع الكلمات الخاطئة فقط
+        </button>
+      </div>
+
+      <div class="flex gap-2">
+        <button onclick="restartFullQuiz()" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-xl shadow transition">إعادة الاختبار 🚀</button>
+        <button onclick="backToSetup()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-3 rounded-xl transition">الرئيسية 🏠</button>
+      </div>
+
+      <p id="sheet-status" class="text-xs text-gray-400 font-bold">جاري تسجيل النتائج في Google Sheets...</p>
+    </div>
+
+  </main>
+
+  <!-- Settings Modal -->
+  <div id="settings-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-2xl text-right">
+      <h3 class="text-lg font-bold text-gray-800 border-b pb-2">⚙️ إعدادات ربط Google Sheets</h3>
+      <p class="text-xs text-gray-600">لربط نتائج الطلاب بشيت جوجل الخاص بكِ، ضعي رابط الـ WebApp الخاص بـ Apps Script هنا:</p>
+      
+      <input type="text" id="webhook-url-input" placeholder="https://script.google.com/macros/s/.../exec" class="w-full p-2.5 border rounded-lg text-xs font-mono">
+      
+      <div class="flex gap-2 pt-2">
+        <button onclick="saveSettings()" class="flex-1 bg-emerald-600 text-white font-bold py-2 rounded-lg text-sm">حفظ</button>
+        <button onclick="closeSettings()" class="flex-1 bg-gray-200 text-gray-700 font-bold py-2 rounded-lg text-sm">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="text-center py-3 text-xs text-emerald-700 font-bold bg-emerald-50/50">
+    إعداد أ. غصون عمرو سامي - معلمة الساينس 🌟
+  </footer>
+
+  <script>
+    // --- Data Base (Chapters 1, 2, 3 Vocabularies) ---
+    const VOCAB_DATA = {
+      // Chapter 1
+      "ch1-l1": [
+        { ar: "الكائنات الحية", en: "living organisms" },
+        { ar: "الأشياء غير الحية", en: "non-living things" },
+        { ar: "الطبيعة", en: "nature" },
+        { ar: "خصائص", en: "characteristics" },
+        { ar: "التغذية", en: "feeding" },
+        { ar: "النمو", en: "growth" },
+        { ar: "التنفس", en: "breathing" },
+        { ar: "الإنسان", en: "human" },
+        { ar: "موطن", en: "habitat" },
+        { ar: "مأوى", en: "shelter" },
+        { ar: "العصافير", en: "sparrows" },
+        { ar: "الجراد", en: "grasshoppers" },
+        { ar: "النمل", en: "ants" },
+        { ar: "رطب", en: "damp" },
+        { ar: "يختفي", en: "hide" },
+        { ar: "يتجنب", en: "avoid" }
+      ],
+      "ch1-l2": [
+        { ar: "الملاحظة", en: "observation" },
+        { ar: "عدسة مكبرة", en: "magnifying glass" },
+        { ar: "بطاقة الملاحظة", en: "record card" },
+        { ar: "جذع شجرة", en: "tree trunk" },
+        { ar: "حشرات", en: "insects" },
+        { ar: "قفازات", en: "gloves" },
+        { ar: "خنفساء الروث", en: "dung beetle" },
+        { ar: "العروق", en: "veins" },
+        { ar: "بيضاوي", en: "oval" },
+        { ar: "روت", en: "dung" },
+        { ar: "بارز", en: "prominent" }
+      ],
+      "ch1-l3": [
+        { ar: "التصنيف", en: "classification" },
+        { ar: "أجنحة", en: "wings" },
+        { ar: "سحلية", en: "lizard" },
+        { ar: "فراشة", en: "butterfly" },
+        { ar: "نبات البردي", en: "papyrus" },
+        { ar: "نبات اللوتس", en: "lotus" }
+      ],
+      "ch1-l4": [
+        { ar: "التكيف", en: "adaptation" },
+        { ar: "يتعايش", en: "survive" },
+        { ar: "شدة / ندرة", en: "scarcity" },
+        { ar: "سلوك", en: "behavior" },
+        { ar: "نبات السنط", en: "acacia" },
+        { ar: "نبات الحنظل", en: "colocynth" },
+        { ar: "اليربوع", en: "jerboa" },
+        { ar: "ثعلب الفنك", en: "fennec fox" },
+        { ar: "يمتص", en: "absorb" },
+        { ar: "الصبار", en: "cactus" }
+      ],
+      "ch1-l5": [
+        { ar: "باطن القدم", en: "soles" },
+        { ar: "فراء سميك", en: "thick fur" },
+        { ar: "جحر", en: "burrow" },
+        { ar: "فريسة", en: "prey" },
+        { ar: "يتغلب على", en: "overcome" },
+        { ar: "الكنغر", en: "kangaroo" }
+      ],
+
+      // Chapter 2
+      "ch2-l1": [
+        { ar: "بيض", en: "eggs" },
+        { ar: "يرقة", en: "larva" },
+        { ar: "شرنقة", en: "pupa" },
+        { ar: "حشرة بالغة", en: "adult insect" },
+        { ar: "الفقس", en: "hatching" },
+        { ar: "عملية الانسلاح", en: "molting process" },
+        { ar: "رحيق", en: "nectar" }
+      ],
+      "ch2-l3": [
+        { ar: "الرأس", en: "head" },
+        { ar: "الصدر", en: "thorax" },
+        { ar: "البطن", en: "abdomen" },
+        { ar: "قرون استشعار", en: "antennae" },
+        { ar: "حشرة اليعسوب", en: "dragonfly" },
+        { ar: "رأس-صدر مدمج", en: "head-thorax" }
+      ],
+
+      // Chapter 3
+      "ch3-l1": [
+        { ar: "بذرة", en: "seed" },
+        { ar: "زراعة", en: "sowing" },
+        { ar: "دوار الشمس", en: "sunflower" },
+        { ar: "الفول", en: "fava bean" },
+        { ar: "ينبت", en: "germinate" }
+      ],
+      "ch3-l2": [
+        { ar: "نبتة صغيرة", en: "seedling" },
+        { ar: "أوراق بذرية (فلقات)", en: "cotyledons" },
+        { ar: "أوراق حقيقية", en: "true leaves" },
+        { ar: "حواف مسننة", en: "serrated edges" },
+        { ar: "ارتفاع النبات", en: "plant height" }
+      ],
+      "ch3-l3": [
+        { ar: "برعم", en: "bud" },
+        { ar: "تفتح الأزهار", en: "blooming flowers" },
+        { ar: "تذبل / تجف", en: "wither" },
+        { ar: "تنتفخ", en: "swell" },
+        { ar: "تنضج", en: "ripen" }
+      ],
+      "ch3-l4": [
+        { ar: "جذور", en: "roots" },
+        { ar: "ساق", en: "stem" },
+        { ar: "أوراق", en: "leaves" },
+        { ar: "مسار / ممر", en: "pathway" },
+        { ar: "امتصاص", en: "absorbing" }
+      ]
+    };
+
+    // --- State Variables ---
+    let currentMode = 'write';
+    let currentQuestions = [];
+    let currentIndex = 0;
+    let score = 0;
+    let streak = 0;
+    let missedWords = [];
+    let studentName = "";
+    let selectedLessonKey = "";
+    let webhookUrl = localStorage.getItem('science_quiz_webhook') || "https://docs.google.com/spreadsheets/d/1p1d5rMuFmrFAY4t3RrU1pOKZwdOhvb1Vb384u-KJg58/edit?usp=sharing";
+
+    // --- App Logic ---
+    function setMode(mode) {
+      currentMode = mode;
+      document.querySelectorAll('.mode-btn').forEach(b => {
+        b.classList.remove('bg-emerald-50', 'border-emerald-500', 'text-emerald-800');
+        b.classList.add('bg-white', 'border-gray-200', 'text-gray-600');
+      });
+      const activeBtn = document.getElementById(`btn-mode-${mode}`);
+      activeBtn.classList.remove('bg-white', 'border-gray-200', 'text-gray-600');
+      activeBtn.classList.add('bg-emerald-50', 'border-emerald-500', 'text-emerald-800');
+    }
+
+    function getSelectedVocabList(key) {
+      if (key.endsWith('-all')) {
+        const chPrefix = key.split('-')[0];
+        let combined = [];
+        for (let k in VOCAB_DATA) {
+          if (k.startsWith(chPrefix)) combined = combined.concat(VOCAB_DATA[k]);
+        }
+        return combined;
+      }
+      return VOCAB_DATA[key] || [];
+    }
+
+    function startQuiz() {
+      studentName = document.getElementById('student-name').value.trim();
+      if (!studentName) {
+        alert('لطفاً اكتب اسمك أولاً لنستطيع حفظ نتيجتك الممتازة!');
+        return;
+      }
+
+      selectedLessonKey = document.getElementById('lesson-select').value;
+      let rawList = getSelectedVocabList(selectedLessonKey);
+      if (rawList.length === 0) {
+        alert('عذراً، لم نجد كلمات لهذا الفصل حالياً.');
+        return;
+      }
+
+      // Shuffle list
+      currentQuestions = [...rawList].sort(() => Math.random() - 0.5);
+      currentIndex = 0;
+      score = 0;
+      streak = 0;
+      missedWords = [];
+
+      document.getElementById('screen-setup').classList.add('hidden');
+      document.getElementById('screen-results').classList.add('hidden');
+      document.getElementById('screen-quiz').classList.remove('hidden');
+
+      renderQuestion();
+    }
+
+    function renderQuestion() {
+      const q = currentQuestions[currentIndex];
+      document.getElementById('quiz-progress-text').innerText = `السؤال ${currentIndex + 1} من ${currentQuestions.length}`;
+      document.getElementById('quiz-progress-bar').style.width = `${((currentIndex) / currentQuestions.length) * 100}%`;
+      document.getElementById('quiz-score').innerText = score;
+      document.getElementById('quiz-streak').innerText = streak;
+      document.getElementById('arabic-word').innerText = q.ar;
+      
+      // Reset Feedback & Actions
+      const fb = document.getElementById('feedback-message');
+      fb.classList.add('hidden');
+      document.getElementById('action-buttons').classList.add('hidden');
+
+      // Hide all mode containers
+      document.getElementById('container-write').classList.add('hidden');
+      document.getElementById('container-mcq').classList.add('hidden');
+      document.getElementById('container-cards').classList.add('hidden');
+
+      if (currentMode === 'write') {
+        document.getElementById('container-write').classList.remove('hidden');
+        const inp = document.getElementById('english-input');
+        inp.value = '';
+        inp.disabled = false;
+        inp.focus();
+      } else if (currentMode === 'mcq') {
+        document.getElementById('container-mcq').classList.remove('hidden');
+        renderMCQOptions(q);
+      } else if (currentMode === 'cards') {
+        document.getElementById('container-cards').classList.remove('hidden');
+        document.getElementById('flashcard').classList.remove('flipped');
+        document.getElementById('card-english-text').innerText = q.en;
+      }
+    }
+
+    function checkTypedAnswer() {
+      const inp = document.getElementById('english-input');
+      const userAns = inp.value.trim().toLowerCase();
+      const q = currentQuestions[currentIndex];
+      const correctAns = q.en.toLowerCase();
+
+      // Normalize simple plurals/singulars for flexible scoring
+      if (userAns === correctAns || userAns === correctAns + 's' || userAns + 's' === correctAns) {
+        handleSuccess();
+      } else {
+        handleFailure(q);
+      }
+    }
+
+    function showHint() {
+      const q = currentQuestions[currentIndex];
+      alert(`💡 تلميح: الكلمة تبدأ بحرف (${q.en.charAt(0).toUpperCase()}) وتتكون من ${q.en.length} حروف.`);
+    }
+
+    function renderMCQOptions(q) {
+      const mcqBox = document.getElementById('container-mcq');
+      mcqBox.innerHTML = '';
+      
+      // Get 3 random wrong options
+      let wrongPool = currentQuestions.filter(item => item.en !== q.en);
+      wrongPool = wrongPool.sort(() => Math.random() - 0.5).slice(0, 3);
+      
+      let options = [q, ...wrongPool].sort(() => Math.random() - 0.5);
+
+      options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = "w-full p-3.5 rounded-xl border-2 border-emerald-200 bg-emerald-50 hover:bg-emerald-100 font-bold text-emerald-900 transition text-lg dir-ltr";
+        btn.innerText = opt.en;
+        btn.onclick = () => {
+          if (opt.en === q.en) {
+            handleSuccess();
+          } else {
+            handleFailure(q);
+          }
+        };
+        mcqBox.appendChild(btn);
+      });
+    }
+
+    function flipCard() {
+      document.getElementById('flashcard').classList.toggle('flipped');
+      speakCurrentWord();
+    }
+
+    function nextCard(remembered) {
+      const q = currentQuestions[currentIndex];
+      if (remembered) {
+        score++;
+      } else {
+        if (!missedWords.includes(q)) missedWords.push(q);
+      }
+      advanceQuestion();
+    }
+
+    function handleSuccess() {
+      score++;
+      streak++;
+      showFeedback("ممتاز! إجابة صحيحة 🎉", "bg-emerald-100", "text-emerald-800");
+      speakCurrentWord();
+      setTimeout(advanceQuestion, 1200);
+    }
+
+    function handleFailure(q) {
+      streak = 0;
+      if (!missedWords.find(w => w.en === q.en)) missedWords.push(q);
+      showFeedback(`إجابة تحتاج تصحيح! الإجابة الصحيحة هي: (${q.en})`, "bg-red-100", "text-red-800");
+      document.getElementById('action-buttons').classList.remove('hidden');
+    }
+
+    function retryQuestion() {
+      document.getElementById('feedback-message').classList.add('hidden');
+      document.getElementById('action-buttons').classList.add('hidden');
+      if (currentMode === 'write') {
+        const inp = document.getElementById('english-input');
+        inp.value = '';
+        inp.focus();
+      }
+    }
+
+    function forceNextQuestion() {
+      advanceQuestion();
+    }
+
+    function advanceQuestion() {
+      currentIndex++;
+      if (currentIndex < currentQuestions.length) {
+        renderQuestion();
+      } else {
+        finishQuiz();
+      }
+    }
+
+    function showFeedback(msg, bgColor, textColor) {
+      const fb = document.getElementById('feedback-message');
+      fb.className = `mt-4 p-3 rounded-xl font-bold text-sm ${bgColor} ${textColor}`;
+      fb.innerText = msg;
+      fb.classList.remove('hidden');
+    }
+
+    function speakCurrentWord() {
+      const q = currentQuestions[currentIndex];
+      if ('speechSynthesis' in window && q) {
+        const utterance = new SpeechSynthesisUtterance(q.en);
+        utterance.lang = 'en-US';
+        window.speechSynthesis.speak(utterance);
+      }
+    }
+
+    function finishQuiz() {
+      document.getElementById('screen-quiz').classList.add('hidden');
+      document.getElementById('screen-results').classList.remove('hidden');
+
+      const total = currentQuestions.length;
+      const pct = Math.round((score / total) * 100);
+
+      document.getElementById('final-score').innerText = `${score} / ${total}`;
+      document.getElementById('final-percentage').innerText = `${pct}%`;
+
+      // Emoji badge
+      if (pct >= 90) {
+        document.getElementById('results-emoji').innerText = '🏆';
+        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+      } else if (pct >= 70) {
+        document.getElementById('results-emoji').innerText = '🌟';
+      } else {
+        document.getElementById('results-emoji').innerText = '💪';
+      }
+
+      // Populate missed words
+      const listEl = document.getElementById('missed-words-list');
+      const practiceBtn = document.getElementById('btn-practice-missed');
+      listEl.innerHTML = '';
+
+      if (missedWords.length > 0) {
+        document.getElementById('missed-words-box').classList.remove('hidden');
+        practiceBtn.classList.remove('hidden');
+        missedWords.forEach(w => {
+          const li = document.createElement('li');
+          li.className = "flex justify-between items-center bg-white p-2 rounded border border-red-100 font-bold";
+          li.innerHTML = `<span>${w.ar}</span> <span class="text-emerald-700 dir-ltr">${w.en}</span>`;
+          listEl.appendChild(li);
+        });
+      } else {
+        document.getElementById('missed-words-box').classList.remove('hidden');
+        practiceBtn.classList.add('hidden');
+        listEl.innerHTML = `<li class="text-center text-emerald-700 font-bold py-2">ما شاء الله! أجبت على جميع الكلمات بشكل صحيح ✨</li>`;
+      }
+
+      // Send payload to Google Sheets Webhook if configured
+      submitToGoogleSheets(studentName, selectedLessonKey, score, total, pct, missedWords);
+    }
+
+    function practiceMissedWordsOnly() {
+      if (missedWords.length === 0) return;
+      currentQuestions = [...missedWords];
+      currentIndex = 0;
+      score = 0;
+      streak = 0;
+      missedWords = [];
+
+      document.getElementById('screen-results').classList.add('hidden');
+      document.getElementById('screen-quiz').classList.remove('hidden');
+      renderQuestion();
+    }
+
+    function restartFullQuiz() {
+      startQuiz();
+    }
+
+    function backToSetup() {
+      document.getElementById('screen-results').classList.add('hidden');
+      document.getElementById('screen-quiz').classList.add('hidden');
+      document.getElementById('screen-setup').classList.remove('hidden');
+    }
+
+    // --- Google Sheets Integration ---
+    function submitToGoogleSheets(name, lesson, score, total, pct, missed) {
+      const statusEl = document.getElementById('sheet-status');
+      statusEl.innerText = "جاري حفظ النتيجة في سجل المعلمة...";
+
+      const payload = {
+        studentName: name,
+        lesson: lesson,
+        score: `${score}/${total}`,
+        percentage: pct,
+        wrongWords: missed.map(m => `${m.ar} (${m.en})`)
+      };
+
+      if (!webhookUrl || webhookUrl.includes('docs.google.com/spreadsheets')) {
+        statusEl.innerText = "ملاحظة: النتيجة محفوظة محلياً. لربط شيت جوجل أوتوماتيكياً يرجى إدخال رابط Apps Script في الإعدادات ⚙️";
+        return;
+      }
+
+      fetch(webhookUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).then(() => {
+        statusEl.innerText = "تم حفظ نتيجة الطالب بنجاح في جوجل شيت! ✅";
+      }).catch(err => {
+        statusEl.innerText = "تعذر الاتصال بـ جوجل شيت (تأكدي من رابط الـ WebApp في الإعدادات).";
+      });
+    }
+
+    function openSettings() {
+      document.getElementById('webhook-url-input').value = webhookUrl;
+      document.getElementById('settings-modal').classList.remove('hidden');
+    }
+
+    function closeSettings() {
+      document.getElementById('settings-modal').classList.add('hidden');
+    }
+
+    function saveSettings() {
+      webhookUrl = document.getElementById('webhook-url-input').value.trim();
+      localStorage.setItem('science_quiz_webhook', webhookUrl);
+      closeSettings();
+      alert('تم حفظ إعدادات الربط بنجاح!');
+    }
+  </script>
+</body>
+</html>
